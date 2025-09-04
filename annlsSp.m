@@ -113,7 +113,7 @@ function [sp, err_sp] = annlsSp(x, f, opt)
         int = fnval_nd(fnder(sp, -1 * ones(x_dim, 1)), cellfun(@(c) c(end), x, UniformOutput=false));
 
         % Check whether stop criteria is satisfied
-        if ((abs(int - int_) <= opt.Tol * int_) && (err_sp < err)) || all(k .* cellfun(@length, knots_ind) > x_size)
+        if ((abs(int - int_) <= opt.Tol * int_) && (err_sp < opt.Err)) || all(k .* cellfun(@length, knots_ind) > x_size)
             return;
         end
 
