@@ -1,2 +1,1 @@
-# aclsSp
-Adaptive clipped least-squares spline
+# Adaptive Nonnegative Least-Squares (ANNLS) spline approximation
