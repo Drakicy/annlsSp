@@ -77,17 +77,17 @@ function [sp, err_sp] = annlsSp(x, f, opt)
     end
 
     % Set spline order
-    if isscalar(opt.k)
-        k = opt.k * ones(x_dim, 1);
+    if isscalar(opt.K)
+        k = opt.K * ones(x_dim, 1);
     else
         % Check whether spline order size agrees with grid dimensionality
         assert( ...
-            length(opt.k) == x_dim, ...
+            length(opt.K) == x_dim, ...
             'Size:incompatible', ...
             "Size of 'k' must agree with dimensionality of 'x'." ...
         );
 
-        k = opt.k;
+        k = opt.K;
     end
 
     %% Perform approximation
