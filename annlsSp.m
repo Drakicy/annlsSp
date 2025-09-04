@@ -1,5 +1,5 @@
-function [sp, err_sp] = aclsSp(x, f, err, tol, k)
-    %% aclsSp: adaptive clipped least-squares spline approximation
+function [sp, err_sp] = annlsSp(x, f, opt)
+    %% annlsSp: adaptive nonnegative least-squares spline approximation
     %
     % INPUT
     %
@@ -23,9 +23,9 @@ function [sp, err_sp] = aclsSp(x, f, err, tol, k)
     arguments
         x (:,1)
         f {mustBeNonnegative}
-        err (1,1) {mustBePositive} = Inf
-        tol (1,1) {mustBePositive, mustBeLessThan(tol, 1)} = 1e-3
-        k (:,1) {mustBeInteger, mustBeGreaterThanOrEqual(k, 2)} = 4
+        opt.Err (1,1) {mustBePositive} = Inf
+        opt.Tol (1,1) {mustBePositive, mustBeLessThan(opt.Tol, 1)} = 1e-3
+        opt.K (:,1) {mustBeInteger, mustBeGreaterThanOrEqual(opt.K, 0)} = 3
     end
 
     %% Set basic parameters and perform argument validation
@@ -74,20 +74,20 @@ function [sp, err_sp] = aclsSp(x, f, err, tol, k)
             'Size:incompatible', ...
             "Dimensionality of 'f' must agree with dimensionality of 'x'." ...
         );
-
-        
     end
 
     % Set spline order
-    if isscalar(k)
-        k = k * ones(x_dim, 1);
+    if isscalar(opt.k)
+        k = opt.k * ones(x_dim, 1);
     else
         % Check whether spline order size agrees with grid dimensionality
         assert( ...
-            length(k) == x_dim, ...
+            length(opt.k) == x_dim, ...
             'Size:incompatible', ...
             "Size of 'k' must agree with dimensionality of 'x'." ...
         );
+
+        k = opt.k;
     end
 
     %% Perform approximation
@@ -100,8 +100,8 @@ function [sp, err_sp] = aclsSp(x, f, err, tol, k)
 
     % Perform knot selection
     while true  
-        % Find clipped least-squares spline approximation
-        sp = clsSp(x, f, knots_ind, k);
+        % Find nonnegative least-squares spline approximation
+        sp = nnlsSp(x, f, knots_ind, k);
 
         % Calculate residuals and error
         f_sp = fnval_nd(sp, x);
@@ -113,7 +113,7 @@ function [sp, err_sp] = aclsSp(x, f, err, tol, k)
         int = fnval_nd(fnder(sp, -1 * ones(x_dim, 1)), cellfun(@(c) c(end), x, UniformOutput=false));
 
         % Check whether stop criteria is satisfied
-        if ((abs(int - int_) <= tol * int_) && (err_sp < err)) || all((k - 1) .* cellfun(@length, knots_ind) > x_size)
+        if ((abs(int - int_) <= opt.Tol * int_) && (err_sp < err)) || all(k .* cellfun(@length, knots_ind) > x_size)
             return;
         end
 
@@ -122,7 +122,7 @@ function [sp, err_sp] = aclsSp(x, f, err, tol, k)
     end
 end
 
-function sp = clsSp(x, f, knots_ind, k)
+function sp = nnlsSp(x, f, knots_ind, k)
     x_dim = length(x);
     f_size = size(f);
 
@@ -131,16 +131,14 @@ function sp = clsSp(x, f, knots_ind, k)
     for i = 1:x_dim
         knots{i} = x{i}( ...
             [
-                knots_ind{i}(1) * ones(k(i) - 1, 1)
+                knots_ind{i}(1) * ones(k(i), 1)
                 knots_ind{i} 
-                knots_ind{i}(end) * ones(k(i) - 1, 1)
+                knots_ind{i}(end) * ones(k(i), 1)
             ]);
 
-        f = reshape(f, f_size(1), []);
+        B = spcol(knots{i}, k(i) + 1, x{i}, 'sparse', 'noderiv');
 
-        B = spcol(knots{i}, k(i), x{i}, 'slvblk', 'noderiv');
-
-        f = slvblk(B, f);
+        f = nnlsm_blockpivot(B, reshape(f, f_size(1), []));
 
         f_size(1) = size(f, 1);
         f = reshape(f, f_size);
@@ -151,7 +149,7 @@ function sp = clsSp(x, f, knots_ind, k)
         end
     end
 
-    sp = spmak_nd(knots, max(f, 0));
+    sp = spmak_nd(knots, f);
 end
 
 function knots_ind = newKnots(knots_ind, res2, k)
@@ -162,7 +160,7 @@ function knots_ind = newKnots(knots_ind, res2, k)
     res2_max = 0;
 
     for i = 1:knots_dim
-        if (k(i) - 1) * length(knots_ind{i}) >= size(res2, i)
+        if k(i) * length(knots_ind{i}) >= size(res2, i)
             continue;
         end
 
