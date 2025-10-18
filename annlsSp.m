@@ -23,9 +23,9 @@ function [sp, err_sp] = annlsSp(x, f, opt)
     arguments
         x (:,1)
         f {mustBeNonnegative}
-        opt.Err (1,1) {mustBePositive} = Inf
+        opt.Error (1,1) {mustBePositive} = Inf
         opt.Tol (1,1) {mustBePositive, mustBeLessThan(opt.Tol, 1)} = 1e-3
-        opt.K (:,1) {mustBeInteger, mustBeGreaterThanOrEqual(opt.K, 0)} = 3
+        opt.Order (:,1) {mustBeInteger, mustBeGreaterThanOrEqual(opt.Order, 0)} = 3
     end
 
     %% Set basic parameters and perform argument validation
@@ -77,17 +77,17 @@ function [sp, err_sp] = annlsSp(x, f, opt)
     end
 
     % Set spline order
-    if isscalar(opt.K)
-        k = opt.K * ones(x_dim, 1);
+    if isscalar(opt.Order)
+        k = opt.Order * ones(x_dim, 1);
     else
         % Check whether spline order size agrees with grid dimensionality
         assert( ...
-            length(opt.K) == x_dim, ...
+            length(opt.Order) == x_dim, ...
             'Size:incompatible', ...
             "Size of 'k' must agree with dimensionality of 'x'." ...
         );
 
-        k = opt.K;
+        k = opt.Order;
     end
 
     %% Perform approximation
@@ -113,7 +113,7 @@ function [sp, err_sp] = annlsSp(x, f, opt)
         int = fnval_nd(fnder(sp, -1 * ones(x_dim, 1)), cellfun(@(c) c(end), x, UniformOutput=false));
 
         % Check whether stop criteria is satisfied
-        if ((abs(int - int_) <= opt.Tol * int_) && (err_sp < opt.Err)) || all(k .* cellfun(@length, knots_ind) > x_size)
+        if ((abs(int - int_) <= opt.Tol * int_) && (err_sp < opt.Error)) || all(k .* cellfun(@length, knots_ind) > x_size)
             return;
         end
 
