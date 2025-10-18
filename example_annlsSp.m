@@ -12,7 +12,7 @@ y = max(0, func(x) + err * randn(n, 1));
 
 x_fine = linspace(x(1), x(end), 10 * n);
 
-sp = annlsSp(x, y, Err=err);
+sp = annlsSp(x, y, Error=err);
 
 figure;
 hold on
@@ -35,7 +35,7 @@ y = a + (b - a) * sort(rand(n, 1));
 
 f = max(0, func(X, Y) + err * randn(n, n));
 
-sp = annlsSp({x, y}, f, Err=err);
+sp = annlsSp({x, y}, f, Error=err);
 
 [X_knots, Y_knots] = ndgrid(sp.knots{:});
 
