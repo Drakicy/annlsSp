@@ -7,13 +7,13 @@ function [sp, err_sp] = annlsSp(x, f, opt)
     %
     %   f: n-dimensional data array
     %
-    %   (optional) err: upper bound of spline approximation error,
+    %   (optional) Error: upper bound of spline approximation error,
     %                   positive scalar
     %
-    %   (optional) tol: relative spline integral error,
+    %   (optional) Tol: relative spline integral error,
     %                   positive scalar less than 1
     %
-    %   (optional) k: spline order,
+    %   (optional) Order: spline order,
     %                 scalar (unified) or vector (for each axis)
     %
     % OUTPUT
